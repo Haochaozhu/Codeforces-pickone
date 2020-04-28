@@ -17,6 +17,8 @@ const baseUrl = "https://codeforces.com/problemset/problem";
 function App() {
   const [picked, setPicked] = useState();
   const [fetching, setFetching] = useState(false);
+  const [diffFrom, setDiffFrom] = useState({ val: 0, error: false });
+  const [diffTo, setDiffTo] = useState({ val: 4000, error: false });
 
   const handleFetchProblems = () => {
     setFetching(true);
@@ -34,7 +36,12 @@ function App() {
   };
 
   const filterProblems = (res) => {
-    const problems = res.data.result.problems;
+    const problems = res.data.result.problems.filter(
+      (ele) =>
+        parseInt(ele.rating) >= diffFrom.val &&
+        parseInt(ele.rating) <= diffTo.val
+    );
+    console.log(problems);
     const options = {
       min: 0,
       max: problems.length - 1,
@@ -49,7 +56,43 @@ function App() {
       url: pickedProblemUrl,
       index: pickedProblem.index,
       contestId: pickedProblem.contestId,
+      rating: pickedProblem.rating,
     });
+  };
+
+  const handleDiffFromChange = (eve) => {
+    const match = /^[0-9]+$/;
+    if (eve.target.value === "") {
+      setDiffFrom({ val: 0, error: false });
+      return;
+    }
+    if (
+      eve.target.value.match(match) &&
+      eve.target.value.length <= 4 &&
+      parseInt(eve.target.value) <= 4000
+    ) {
+      setDiffFrom({ val: parseInt(eve.target.value), error: false });
+    } else {
+      setDiffFrom({ val: 0, error: true });
+    }
+  };
+
+  const handleDiffToChange = (eve) => {
+    const match = /^[0-9]+$/;
+    if (eve.target.value === "") {
+      setDiffTo({ val: 4000, error: false });
+      return;
+    }
+    if (
+      eve.target.value.match(match) &&
+      eve.target.value.length <= 4 &&
+      parseInt(eve.target.value) <= 4000 &&
+      parseInt(eve.target.value) >= diffFrom.val
+    ) {
+      setDiffTo({ val: parseInt(eve.target.value), error: false });
+    } else {
+      setDiffTo({ val: 4000, error: true });
+    }
   };
 
   return (
@@ -64,10 +107,18 @@ function App() {
         <Grid container direction="column" spacing={2} justify="center">
           <Grid item>Difficulty Rating</Grid>
           <Grid item>
-            <TextField label="From" />
+            <TextField
+              label="From"
+              error={diffFrom.error}
+              onChange={(event) => handleDiffFromChange(event)}
+            />
           </Grid>
           <Grid item>
-            <TextField label="To" />
+            <TextField
+              label="To"
+              error={diffTo.error}
+              onChange={(event) => handleDiffToChange(event)}
+            />
           </Grid>
           <Grid item>
             <Button
@@ -82,6 +133,7 @@ function App() {
           </Grid>
         </Grid>
         <CircularProgress
+          size="20px"
           style={{
             visibility: fetching ? "visible" : "hidden",
             margin: "20px",
@@ -92,10 +144,13 @@ function App() {
             variant="h5"
             align="center"
             children={
-              <a
-                style={{ color: "black" }}
-                href={picked.url}
-              >{`${picked.contestId}${picked.index}. ${picked.name}`}</a>
+              <div>
+                <a
+                  style={{ color: "black" }}
+                  href={picked.url}
+                >{`${picked.contestId}${picked.index}. ${picked.name}`}</a>
+                <p>{`Rating: ${picked.rating}`}</p>
+              </div>
             }
           ></Typography>
         )}
